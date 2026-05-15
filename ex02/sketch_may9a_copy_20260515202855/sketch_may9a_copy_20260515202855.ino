@@ -1,27 +1,34 @@
-// 完全按照你的参考代码风格改写
-// 用 millis() 实现 1Hz 闪烁，无 delay()
+#define LED_PIN 2
 
-#define LED_PIN 2        // 和你代码一致的引脚
-unsigned long lastMillis = 0;
-const long interval = 1000;  // 1秒间隔
-bool ledState = LOW;
+// 时间参数
+const unsigned long shortBlink = 300;
+const unsigned long longBlink  = 900;
+const unsigned long gap         = 200;
+const unsigned long endWait     = 3000;
+
+unsigned long preTime = 0;
+// 0短 1长 9结尾停顿
+byte sos[] = {0,0,0,1,1,1,0,0,0,9};
+int cnt = 0;
+bool ledOn = false;
 
 void setup() {
-  Serial.begin(115200);    // 串口初始化
-  pinMode(LED_PIN, OUTPUT); // LED初始化
+  pinMode(LED_PIN, OUTPUT);
 }
 
 void loop() {
-  // 保持你原有的串口输出
-  Serial.println("Hello ESP32!");
+  unsigned long now = millis();
+  unsigned long t = (sos[cnt]==0) ? shortBlink : (sos[cnt]==1) ? longBlink : endWait;
 
-  // millis() 非阻塞延时（核心）
-  unsigned long currentMillis = millis();
-  
-  if (currentMillis - lastMillis >= interval) {
-    lastMillis = currentMillis;
-    
-    ledState = !ledState;               // 翻转状态
-    digitalWrite(LED_PIN, ledState);   // 控制LED
+  if(now - preTime >= t){
+    preTime = now;
+    if(sos[cnt] == 9){
+      cnt = 0;
+      ledOn = false;
+    }else{
+      ledOn = !ledOn;
+      if(!ledOn) cnt++;
+    }
+    digitalWrite(LED_PIN, ledOn);
   }
 }
