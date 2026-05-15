@@ -1,34 +1,26 @@
-#define LED_PIN 2
+// ESP32 呼吸灯实验 PWM
+const int ledPin = 2;  
 
-// 时间参数
-const unsigned long shortBlink = 300;
-const unsigned long longBlink  = 900;
-const unsigned long gap         = 200;
-const unsigned long endWait     = 3000;
-
-unsigned long preTime = 0;
-// 0短 1长 9结尾停顿
-byte sos[] = {0,0,0,1,1,1,0,0,0,9};
-int cnt = 0;
-bool ledOn = false;
+const int freq = 5000;
+const int resolution = 8;
 
 void setup() {
-  pinMode(LED_PIN, OUTPUT);
+  Serial.begin(115200);
+  ledcAttach(ledPin, freq, resolution);
 }
 
 void loop() {
-  unsigned long now = millis();
-  unsigned long t = (sos[cnt]==0) ? shortBlink : (sos[cnt]==1) ? longBlink : endWait;
-
-  if(now - preTime >= t){
-    preTime = now;
-    if(sos[cnt] == 9){
-      cnt = 0;
-      ledOn = false;
-    }else{
-      ledOn = !ledOn;
-      if(!ledOn) cnt++;
-    }
-    digitalWrite(LED_PIN, ledOn);
+  // 逐渐变亮
+  for(int dutyCycle = 0; dutyCycle <= 255; dutyCycle++){   
+    ledcWrite(ledPin, dutyCycle);   
+    delay(10);
   }
+
+  // 逐渐变暗
+  for(int dutyCycle = 255; dutyCycle >= 0; dutyCycle--){
+    ledcWrite(ledPin, dutyCycle);   
+    delay(10);
+  }
+  
+  Serial.println("Breathing cycle completed");
 }
